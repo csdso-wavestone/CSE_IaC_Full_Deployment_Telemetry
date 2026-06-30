@@ -194,6 +194,8 @@ resource "azurerm_linux_virtual_machine" "vm3" {
   admin_username                  = "user-formation"
   admin_password                  = "formationCodingGame0!"
   disable_password_authentication = false
+
+  custom_data = base64encode(file("vm-init.sh"))
   
   source_image_reference {
     publisher = "canonical"

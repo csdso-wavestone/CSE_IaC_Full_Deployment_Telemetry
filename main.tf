@@ -7,7 +7,7 @@ provider "azurerm" {
 
 # Create Storage Account #1
 resource "azurerm_storage_account" "sg1" {
-  name                            = "otstorageaccountuniquett"
+  name                            = format("%ssto4data", var.nickname)
   resource_group_name             = var.rg_name
   location                        = var.location
   account_tier                    = "Standard"
@@ -24,7 +24,7 @@ resource "azurerm_storage_container" "newcontainer1" {
 
 # Create Storage Account #2
 resource "azurerm_storage_account" "sg2" {
-  name                            = "csestologsuniquetest"
+  name                            = format("%ssto4logs", var.nickname)
   resource_group_name             = var.rg_name
   location                        = var.location
   account_tier                    = "Standard"
@@ -41,7 +41,7 @@ resource "azurerm_storage_container" "newcontainer2" {
 
 # Create MySQL Server 
 resource "azurerm_mysql_flexible_server" "serverformation1" {
-  name = "sqlserveruniquetest" # add your name to make it unique. Can only consist of lowercase letters and numbers, and must be between 3 and 24 characters long.
+  name = format("%ssqlservercse", var.nickname) # add your name to make it unique. Can only consist of lowercase letters and numbers, and must be between 3 and 24 characters long.
 
   location                     = var.location
   resource_group_name          = var.rg_name
@@ -57,6 +57,7 @@ resource "azurerm_mysql_flexible_server" "serverformation1" {
     iops               = 360
   }
 }
+
 resource "azurerm_mysql_flexible_server_configuration" "ssl_config" {
   name                = "require_secure_transport"
   resource_group_name = var.rg_name
@@ -84,7 +85,7 @@ resource "azurerm_mysql_flexible_server_firewall_rule" "mysqlfwrule1" {
   azurerm_mysql_flexible_database.mysqldb1]
 }
 
-
+# Create a Virtual Network
 resource "azurerm_virtual_network" "vnet1" {
   count               = var.deploy_vm ? 1 : 0
   name                = "vnet1-iac"
@@ -92,8 +93,6 @@ resource "azurerm_virtual_network" "vnet1" {
   location            = var.location
   resource_group_name = var.rg_name
 }
-
-
 resource "azurerm_subnet" "subnet1" {
   count                = var.deploy_vm ? 1 : 0
   name                 = "subnet1-iac"
@@ -102,6 +101,7 @@ resource "azurerm_subnet" "subnet1" {
   address_prefixes     = ["10.0.1.0/24"]
 }
 
+# Create a public IP
 resource "azurerm_public_ip" "publicIP1" {
   count               = var.deploy_vm ? 1 : 0
   name                = "publicIP1-iac"
@@ -111,11 +111,10 @@ resource "azurerm_public_ip" "publicIP1" {
   allocation_method   = "Static"
 }
 
-
 # Define a network interface for the VM 
-resource "azurerm_network_interface" "networki1" {
+resource "azurerm_network_interface" "nic1" {
   count               = var.deploy_vm ? 1 : 0
-  name                = "networki1-iac"
+  name                = "nic1-iac"
   location            = var.location
   resource_group_name = var.rg_name
   ip_configuration {
@@ -132,65 +131,59 @@ resource "azurerm_network_security_group" "nsg1" {
   name                = "nsg1-iac"
   location            = var.location
   resource_group_name = var.rg_name
-}
-resource "azurerm_network_security_rule" "rule1" {
-  count                       = var.deploy_vm ? 1 : 0
-  resource_group_name         = var.rg_name
-  name                        = "HTTP"
-  priority                    = 1010
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "80"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-  network_security_group_name = azurerm_network_security_group.nsg1[count.index].name
-}
-resource "azurerm_network_security_rule" "rule2" {
-  count                       = var.deploy_vm ? 1 : 0
-  resource_group_name         = var.rg_name
-  name                        = "HTTPS"
-  priority                    = 1009
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "443"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-  network_security_group_name = azurerm_network_security_group.nsg1[count.index].name
-}
-resource "azurerm_network_security_rule" "rule3" {
-  count                       = var.deploy_vm ? 1 : 0
-  resource_group_name         = var.rg_name
-  name                        = "SSH"
-  priority                    = 1008
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "22"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-  network_security_group_name = azurerm_network_security_group.nsg1[count.index].name
+
+  security_rule {
+    name                        = "HTTP"
+    priority                    = 1010
+    direction                   = "Inbound"
+    access                      = "Allow"
+    protocol                    = "*"
+    source_port_range           = "*"
+    destination_port_range      = "80"
+    source_address_prefix       = "*"
+    destination_address_prefix  = "*"
+  }
+
+  security_rule {
+    name                        = "HTTPS"
+    priority                    = 1009
+    direction                   = "Inbound"
+    access                      = "Allow"
+    protocol                    = "*"
+    source_port_range           = "*"
+    destination_port_range      = "443"
+    source_address_prefix       = "*"
+    destination_address_prefix  = "*"
+  }
+
+  security_rule {
+    name                        = "SSH"
+    priority                    = 1008
+    direction                   = "Inbound"
+    access                      = "Allow"
+    protocol                    = "*"
+    source_port_range           = "*"
+    destination_port_range      = "22"
+    source_address_prefix       = "*"
+    destination_address_prefix  = "*"
+  }
 }
 
-# Connect the security group to the network interface 
+# Assign the security group to the network interface 
 resource "azurerm_network_interface_security_group_association" "association1" {
   count                     = var.deploy_vm ? 1 : 0
-  network_interface_id      = azurerm_network_interface.networki1[count.index].id
+  network_interface_id      = azurerm_network_interface.nic1[count.index].id
   network_security_group_id = azurerm_network_security_group.nsg1[count.index].id
 }
 
 # Create Virtual Machine 
-resource "azurerm_linux_virtual_machine" "vm3" {
+resource "azurerm_linux_virtual_machine" "vm-website" {
   count                           = var.deploy_vm ? 1 : 0
-  name                            = "vm3-iac"
+  name                            = format("%s-vm-website", var.nickname)
   location                        = var.location
   resource_group_name             = var.rg_name
-  network_interface_ids           = [azurerm_network_interface.networki1[count.index].id]
-  size                            = "Standard_B1s"
+  network_interface_ids           = [azurerm_network_interface.nic1[count.index].id]
+  size                            = "Standard_B1ls"
   admin_username                  = "user-formation"
   admin_password                  = "formationCodingGame0!"
   disable_password_authentication = false

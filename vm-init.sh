@@ -6,7 +6,10 @@ apt-get install -y \
     apache2 \
     php \
     php-mysql \
-    git
+    php-curl \
+    php-json \
+    git \
+    mysql-client
 
 rm -rf /var/www/html/*
 

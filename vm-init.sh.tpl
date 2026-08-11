@@ -23,3 +23,11 @@ cp -R /tmp/site/* /var/www/html/
 # Setting up Apache2 and restart it
 chown -R www-data:www-data /var/www/html
 systemctl restart apache2
+
+# Variables pour la BDD
+export MYSQL_HOST="${nickname}sqlservercse.mysql.database.azure.com"
+export MYSQL_USER="adminformation"
+export MYSQL_PASSWORD="formationCodingGame0!"
+
+# Execution du script d'initialisation
+bash db-init.sh

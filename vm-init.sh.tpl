@@ -24,10 +24,24 @@ cp -R /tmp/site/* /var/www/html/
 chown -R www-data:www-data /var/www/html
 systemctl restart apache2
 
-# Variables pour la BDD
+# MySQL configuration
 export MYSQL_HOST="${nickname}sqlservercse.mysql.database.azure.com"
 export MYSQL_USER="adminformation"
 export MYSQL_PASSWORD="formationCodingGame0!"
 
-# Execution du script d'initialisation
-bash db-init.sh
+# Wait until MySQL is available
+while ! mysql \
+    -h "$MYSQL_HOST" \
+    -u "$MYSQL_USER" \
+    -p"$MYSQL_PASSWORD" \
+    -e "SELECT 1" >/dev/null 2>&1
+do
+    sleep 10
+done
+
+# Initialize database
+mysql \
+    -h "$MYSQL_HOST" \
+    -u "$MYSQL_USER" \
+    -p"$MYSQL_PASSWORD" \
+    < /tmp/site/sql.sql

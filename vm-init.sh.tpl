@@ -30,12 +30,24 @@ MYSQL_USER="adminformation"
 MYSQL_PASSWORD="formationCodingGame0!"
 
 # Wait until MySQL is available
+MAX_RETRIES=60
+RETRY_COUNT=0
+
 while ! mysql \
     -h "$MYSQL_HOST" \
     -u "$MYSQL_USER" \
     -p"$MYSQL_PASSWORD" \
     -e "SELECT 1" >/dev/null 2>&1
 do
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+
+    echo "MySQL unavailable, attempt $RETRY_COUNT/$MAX_RETRIES"
+
+    if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
+        echo "Unable to connect to MySQL after 10 minutes."
+        exit 1
+    fi
+
     sleep 10
 done
 

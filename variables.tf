@@ -25,5 +25,5 @@ variable "nickname" {
 
 variable "deploy_vm" {
   type    = bool
-  default = false
+  default = true
 }

@@ -188,7 +188,12 @@ resource "azurerm_linux_virtual_machine" "vm-website" {
   admin_password                  = "formationCodingGame0!"
   disable_password_authentication = false
 
-  custom_data = base64encode(file("vm-init.sh"))
+  custom_data = base64encode(templatefile(
+    "${path.module}/vm-init.sh.tpl",
+    {
+      nickname = var.nickname
+    }
+))
   
   source_image_reference {
     publisher = "canonical"
